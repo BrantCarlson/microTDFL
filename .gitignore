@@ -1,0 +1,5 @@
+# ignore python byte-compiled files
+*.py[cod]
+
+# ignore ipython checkpoints
+.ipynb_checkpoints/
