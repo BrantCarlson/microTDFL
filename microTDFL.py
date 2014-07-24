@@ -4,27 +4,14 @@ from numpy import *
 def timeStepsNeeded(n, dx, dt):
     return int((n - 1) * dx / constants.c / dt) + 2 # previous timesteps plus current one
 
-def computeR2(n, dx, a, navg):
-    R2 = zeros((n - 1, n))
-    for i in range(n):
-        c = max((i - 0.5) * dx, 0)
-        d = min((i + 0.5) * dx, (n - 1) * dx)
-        for j in range(n - 1):
-            for k in range(navg):
-                x = (j + k / (navg - 1.0)) * dx
-                if x < c: R2[j, i] += (arctan((c - x) / a) - arctan((d - x) / a))
-                elif x > d: R2[j, i] += (arctan((d - x) / a) - arctan((c - x) / a))
-                else: R2[j, i] += (-arctan((c - x) / a) - arctan((d - x) / a))
-            R2[j, i] /= (4 * pi * constants.epsilon_0 * dx * a * navg)
-            if i == 0 or i == n - 1: R2[j, i] *= 2
-    return R2
-
-# full length charge segments
-def computeR2FLCS(n, dx, a, navg):
+def computeR2(n, dx, a, navg, full_length=True):
     R2 = zeros((n - 1, n))
     for i in range(n):
         c = (i - 0.5) * dx
         d = (i + 0.5) * dx
+        if full_length:
+            c = max(c, 0)
+            d = min(d, (n - 1) * dx)
         for j in range(n - 1):
             for k in range(navg):
                 x = (j + k / (navg - 1.0)) * dx
@@ -32,13 +19,17 @@ def computeR2FLCS(n, dx, a, navg):
                 elif x > d: R2[j, i] += (arctan((d - x) / a) - arctan((c - x) / a))
                 else: R2[j, i] += (-arctan((c - x) / a) - arctan((d - x) / a))
             R2[j, i] /= (4 * pi * constants.epsilon_0 * dx * a * navg)
+            if (i == 0 or i == n - 1) and not full_length: R2[j, i] *= 2
     return R2
 
-def computeR1L(n, dx, a, navg):
+def computeR1L(n, dx, a, navg, full_length=True):
     R1L = zeros((n - 1, n))
     for i in range(n):
-        c = max((i - 0.5) * dx, 0)
-        d = min((i + 0.5) * dx, (n - 1) * dx)
+        c = (i - 0.5) * dx
+        d = (i + 0.5) * dx
+        if full_length:
+            c = max(c, 0)
+            d = min(d, (n - 1) * dx)
         for j in range(n - 1):
             for k in range(navg):
                 x = (j + k / (navg - 1.0)) * dx
@@ -47,23 +38,7 @@ def computeR1L(n, dx, a, navg):
                 elif x > d: R1L[j, i] += (F(d - x) - F(c - x))
                 else: R1L[j, i] += (2 * F(0) - F(c - x) - F(d - x))
             R1L[j, i] /= (4 * pi * constants.epsilon_0 * constants.c * dx * navg)
-            if i == 0 or i == n - 1: R1L[j, i] *= 2
-    return R1L
-
-# full length charge segments
-def computeR1LFLCS(n, dx, a, navg):
-    R1L = zeros((n - 1, n))
-    for i in range(n):
-        c = (i - 0.5) * dx
-        d = (i + 0.5) * dx
-        for j in range(n - 1):
-            for k in range(navg):
-                x = (j + k / (navg - 1.0)) * dx
-                F = lambda x: log(sqrt(x**2 + a**2) + x)
-                if x < c: R1L[j, i] += (F(c - x) - F(d - x))
-                elif x > d: R1L[j, i] += (F(d - x) - F(c - x))
-                else: R1L[j, i] += (2 * F(0) - F(c - x) - F(d - x))
-            R1L[j, i] /= (4 * pi * constants.epsilon_0 * constants.c * dx * navg)
+            if (i == 0 or i == n - 1) and not full_length: R1L[j, i] *= 2
     return R1L
 
 def computeR1T(n, dx, a, navg):
