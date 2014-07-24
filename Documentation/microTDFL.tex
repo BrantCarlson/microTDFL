@@ -1,0 +1,97 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{makeidx}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphics}
+\usepackage{enumerate}
+\usepackage{multicol}
+\usepackage{changepage}
+\usepackage{fullpage}
+\usepackage{graphicx}
+
+\title{Documentation for the microTDFL}
+
+\author{Justin Barhite}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Abstract goes here.
+\end{abstract}
+
+\section{Introduction}
+\begin{itemize}
+\item Introductory remarks
+\end{itemize}
+
+\section{Background}
+\begin{itemize}
+\item Ohm's law
+\item Charge conservation
+\item EFIE
+\item Thin wire approximation
+\item Basically the same as section 2 in \cite{mathdev}
+\end{itemize}
+
+\section{Framework}
+\begin{itemize}
+\item Channel geometry (with pictures!)
+\item Overview of model operation and organization of history vector
+\end{itemize}
+
+\section{Generating the Matrix}
+\begin{itemize}
+\item Computation of geometric factors
+\item Interpolation of charges and currents
+\item Putting everything together to get the transition matrix
+\end{itemize}
+
+\section{Two-Stage Stepping}
+\begin{itemize}
+\item Motivation for two-stage averaging scheme
+\item Details of implementation
+\end{itemize}
+
+\section{Stability Analysis}
+\begin{itemize}
+\item Overview of eigenvalue-based stability analysis
+\item Pretty plots of eigenvalues! (and comments thereupon)
+\item Effect of parameters on stability
+\end{itemize}
+
+\section{Equilibrium Charge Distribution}
+\begin{itemize}
+\item Plots of equilibrium charge distribution with and without external field
+\item Comparison to results in Jackson paper
+\end{itemize}
+
+\section{Off-Channel Field}
+\begin{itemize}
+\item Details of off-channel field calculation
+\item Effect of distance and orientation on measured field
+\end{itemize}
+
+\section{Stepped Leaders}
+\begin{itemize}
+\item Implementation of adding segments
+\item Plots of off-channel field, comparison to HAMMA data
+\end{itemize}
+
+\section{Frequency Response of Channel to External Field}
+\begin{itemize}
+\item Power spectral density of radiated field
+\end{itemize}
+
+\section*{Appendices}
+\begin{itemize}
+\item Briefly describe functions in microTDFL.py and their inputs/outputs
+\end{itemize}
+
+\bibliography{microTDFL.bbl}
+
+\end{document}
