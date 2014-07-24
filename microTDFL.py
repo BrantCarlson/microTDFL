@@ -32,7 +32,6 @@ def computeR2FLCS(n, dx, a, navg):
                 elif x > d: R2[j, i] += (arctan((d - x) / a) - arctan((c - x) / a))
                 else: R2[j, i] += (-arctan((c - x) / a) - arctan((d - x) / a))
             R2[j, i] /= (4 * pi * constants.epsilon_0 * dx * a * navg)
-            if i == 0 or i == n - 1: R2[j, i] *= 2
     return R2
 
 def computeR1L(n, dx, a, navg):
@@ -65,7 +64,6 @@ def computeR1LFLCS(n, dx, a, navg):
                 elif x > d: R1L[j, i] += (F(d - x) - F(c - x))
                 else: R1L[j, i] += (2 * F(0) - F(c - x) - F(d - x))
             R1L[j, i] /= (4 * pi * constants.epsilon_0 * constants.c * dx * navg)
-            if i == 0 or i == n - 1: R1L[j, i] *= 2
     return R1L
 
 def computeR1T(n, dx, a, navg):
