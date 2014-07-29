@@ -1,7 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath}
 \usepackage{amsthm}
-\usepackage{bm}
 \usepackage{makeidx}
 \usepackage{amsthm}
 \usepackage{amsfonts}
@@ -12,6 +11,11 @@
 \usepackage{changepage}
 \usepackage{fullpage}
 \usepackage{graphicx}
+\usepackage{listings}
+\usepackage{mathtools}
+\setcounter{MaxMatrixCols}{20}
+\setlength\delimitershortfall{-2pt}
+\newcommand{\mat}{\mathbf}
 
 \title{Documentation for the microTDFL}
 
@@ -42,18 +46,148 @@ Abstract goes here.
 \item Basically the same as section 2 in \cite{mathdev}
 \end{itemize}
 
+\subsection{The EFIE}
+The electric field integral equation (EFIE) gives the electric field $\vec{E}(\vec{x}, t)$, at position $\vec{x}$ and time $t$, in terms of the charge and current densities and their time derivatives:
+\begin{equation}
+\vec{E}(\vec{x}, t) = \frac{1}{4\pi\epsilon_0} \int d^3x' \left\{ \frac{\hat{R}}{R^2} \left[\rho(\vec{x}', t')\right]_\text{ret} + \frac{\hat{R}}{cR} \left[\frac{\partial\rho(\vec{x}', t')}{\partial t'}\right]_\text{ret} - \frac{1}{c^2R} \left[\frac{\partial\vec{J}(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\},
+\end{equation}
+where $\rho$ is the volume charge density, $\vec{J}$ is the current density, $\vec{R} = \vec{x} - \vec{x}'$, $R = \|\vec{R}\|$, $\hat{R} = \vec{R}/R$, and $t' = t - R/c$.
+
+\subsection{Thin-wire approximation}
+With the thin-wire approximation:
+
+\begin{equation}
+\label{EFIE1d}
+\vec{E}(\vec{x}, t) = \frac{1}{4\pi\epsilon_0} \int dl' \left\{ \frac{\hat{R}}{R^2} \left[\lambda(\vec{x}', t')\right]_\text{ret} + \frac{\hat{R}}{cR} \left[\frac{\partial\lambda(\vec{x}', t')}{\partial t'}\right]_\text{ret} - \frac{1}{c^2R} \left[\frac{\partial\vec{I}(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\}
+\end{equation}
+
 \section{Framework}
 \begin{itemize}
 \item Channel geometry (with pictures!)
 \item Overview of model operation and organization of history vector
 \end{itemize}
 
+Since the charge and current densities in the EFIE are evaluated in retarded time, the electric field depends on a history of charges and currents, not just the present state of the channel. This history is stored as a vector of the form
+\begin{equation}
+\vec{h} = 
+\begin{bmatrix}
+\vec{I}^{(m-1)} & \vec{I}^{(m-2)} & \cdots & \vec{I}^{(1)} & \vec{I}^{(0)} & \vec{Q}^{(0)} & 1
+\end{bmatrix},
+\end{equation}
+where $m$ is the number of time steps stored in the history vector, $\vec{I}^{(j)}$ is the vector of the $n-1$ currents at time step $j$ and $\vec{Q}^{(j)}$ is the vector of the $n$ charges at time step $j$. The 1 at the end of the vector allows an external electric field to be applied to the channel and can be varied to change the applied field. The currents are ordered from the most recent time step to the most ancient time step, and only the charges at the most ancient time step are stored. The charges at all other time steps can be computed from the currents. While it would be simpler to store the charges at every time step instead of computing them from the currents, this would nearly double the size of the vector; I opted for a smaller history vector and transition matrix at the cost of some additional complexity. The number of stored time steps $m$ is determined by the longest light travel time between any two segments. The length of the history vector is $m(n-1)+n+1$.
+
+In order to step the simulation forward in time, the currents at the next time step must be determined from the history of charges and currents. This is done by calculating the electric field two different ways at each current segment at the next time step. The first is through Ohm's Law; the electric field is $R_l$ times the unknown future current. The other is computing the field from the EFIE, in terms of both the unknown currents and the history of charges and currents (and the applied field). Setting these equal to each other for each of the current segments yields an $(n-1)\times(n-1)$ linear system of equations; solving this system gives the currents at the next time step. Once the next currents are computed, the history vector has to be updated. The most ancient currents in the history vector are deleted, the others are shifted down, and the new currents are inserted at the top of the vector; the charges in the history vector are also updated to the new oldest time step.
+
+This is the basic idea of how the simulation works. To carry out the simulation, a transition matrix can be computed that, when multiplied with the history vector, produces the updated history vector one time step forward. Thus instead of advancing through the simulation one step at a time, the matrix can be raised to any power to advance a large number of steps at once.
+
+\section{Computing the Electric Field}
+\subsection{Applying the EFIE to the discretized channel}
+Consider the electric field at $\vec{x}_i$, the center of current segment $i$. From equation \ref{EFIE1d} we have
+\begin{equation}
+\vec{E}(\vec{x}_i, t) = \frac{1}{4\pi\epsilon_0} \int dl' \left\{ \frac{\hat{R}}{R^2} \left[\lambda(\vec{x}', t')\right]_\text{ret} + \frac{\hat{R}}{cR} \left[\frac{\partial\lambda(\vec{x}', t')}{\partial t'}\right]_\text{ret} - \frac{1}{c^2R} \left[\frac{\partial\vec{I}(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\}
+\end{equation}
+The current in segment $i$ is determined by the component of the electric field parallel to the segment. Letting $\hat{I}_i$ be the unit vector parallel to current segment $i$, the parallel component of the field is
+\begin{equation}
+\hat{I}_i\cdot\vec{E}(\vec{x}_i, t) = \frac{1}{4\pi\epsilon_0} \int dl' \left\{ \frac{\hat{I}_i\cdot\hat{R}}{R^2} \left[\lambda(\vec{x}', t')\right]_\text{ret} + \frac{\hat{I}_i\cdot\hat{R}}{cR} \left[\frac{\partial\lambda(\vec{x}', t')}{\partial t'}\right]_\text{ret} - \frac{1}{c^2R} \left[\hat{I}_i\cdot\frac{\partial\vec{I}(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\}.
+\end{equation}
+
+% geometric factors:
+
+\begin{align}
+\mat{R2}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j R^2}\\
+\mat{R1L}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{c l_j R}\\
+\mat{R1T}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2 R}
+\end{align}
+
+\begin{equation}
+I_iR_l =
+\sum_{j=1}^n \left\{\mat{R2}_{ij}\left[Q_j(t')\right]_\text{ret}
++ \mat{R1L}_{ij}\left[\frac{\partial Q_j(t')}{\partial t'}\right]_\text{ret}\right\}
+- \sum_{j=1}^{n-1}\left\{\mat{R1T}_{ij}\left[\frac{\partial I_j(t')}{\partial t'}\right]_\text{ret}\right\}
+\end{equation}
+...with a derivation of the above equation from the EFIE (also definitions of the geometric factor matrices).
+
+\subsection{Computing the geometric factors}
+Text goes here.
+
+\subsection{Interpolating the charges and currents}
+
+\section{The Structure of the Matrix}
+\subsection{Solving for the next currents}
+
+The heart of the model is the system of linear equations that solves for the currents at the next time step. This system has the form
+\begin{align}
+\begin{split}
+I_0R_l &= c_{00}I_0 + c_{01}I_1 + c_{02}I_2 + \cdots + c_{0,n-2}I_{n-2} + d_0 \\
+I_1R_l &= c_{10}I_0 + c_{11}I_1 + c_{12}I_2 + \cdots + c_{1,n-2}I_{n-2} + d_1 \\
+I_2R_l &= c_{20}I_0 + c_{21}I_1 + c_{22}I_2 + \cdots + c_{2,n-2}I_{n-2} + d_2 \\
+\vdotswithin{I_2R_l} & \vdotswithin{= c_{20}I_0 + c_{21}I_1 + c_{22}I_2 + \cdots + c_{2,n-2}I_{n-2} + d_2}
+\end{split}
+\end{align}
+where the left side of each equation is the electric field as determined by Ohm's law and the right side is the field as computed from the EFIE. The currents $I_0, I_1, \ldots, I_{n-2}$ are the unknown currents at the next time step, each $c_{ij}I_j$ term is the contribution of current $j$ to electric field at current segment $i$, and $d_i$ is the contribution of earlier charges and currents (and the applied field) to the field at current segment $i$. In matrix form, we have
+\begin{equation}
+R_l\vec{I} = \left[c_{ij}\right] \cdot \vec{I} + \vec{d}.
+\end{equation}
+Rearranging, we get
+\begin{equation}
+\label{linearsystem}
+\left(\left[c_{ij}\right] - R_l\mathbb{I}\right) \vec{I} = -\vec{d},
+\end{equation}
+where $\mathbb{I}$ is the identity matrix. Defining $\mat{M}$ to be the matrix on the left side of equation \ref{linearsystem}, and defining $\vec{b} = -\vec{d}$ (to avoid negative signs), we simply have
+\begin{equation}
+\label{mib}
+\mat{M} \vec{I} = \vec{b}.
+\end{equation}
+
+\subsection{Updating the history matrix}
+We need to do three things to produce the next history vector: 1) shift the current history down to make room for the new time step, 2) compute the new currents and insert them in the history vector, and 3) update the charges stored in the vector. All three of these are done by multiplying a matrix by the old history vector (and the sum of these matrices is the overall transition matrix). Each of these matrices will be briefly discussed here, and the details of their implementation will be provided in the next section.
+
+The first step is handled by the matrix $\mat{S}$. It shifts each time step down in the vector, except for the last time step, which is no longer stored. It leaves zeros at the top of the vector (where the new currents will be inserted), and preserves the bottom of the vector (the charges and the 1 for the applied field). That is, if
+\begin{equation}
+\label{oldhistory}
+\vec{h}_\text{old} = 
+\begin{bmatrix}
+\vec{I}^{(m-1)} & \vec{I}^{(m-2)} & \cdots & \vec{I}^{(1)} & \vec{I}^{(0)} & \vec{Q}^{(0)} & 1
+\end{bmatrix},
+\end{equation}
+then multiplying the history vector by $\mat{S}$ gives
+\begin{equation}
+\mat{S}\vec{h}_\text{old} = 
+\begin{bmatrix}
+\vec{0} & \vec{I}^{(m-1)} & \vec{I}^{(m-2)} & \cdots & \vec{I}^{(2)} & \vec{I}^{(1)} & \vec{Q}^{(0)} & 1
+\end{bmatrix}.
+\end{equation}
+The second step is a little more involved. From equation \ref{mib}, we see that the new currents are $\vec{I} = \mat{M}^{-1}\vec{b}$. Since $\mat{M}$ does not depend on the charge/current history or in any other way evolve from step to step, we can compute it once and use its inverse in the transition matrix. The vector $\vec{b}$, however, does depend on the charge/current history, so we'll need a way of computing it from the history vector. In fact, we can compute a matrix $\mat{A}$ such that $\mat{A}\vec{h} = \vec{b}$. The new currents are then
+\begin{equation}
+\vec{I} = \mat{M}^{-1}\mat{A}\vec{h}.
+\end{equation}
+The vector $\vec{I}$ is only contains the $n-1$ new currents, so we multiply it by another matrix $\mat{E}$ to extend it to the length of the history vector. That is, if we start with the history vector in equation \ref{oldhistory}, we now have
+\begin{equation}
+\mat{E}\mat{M}^{-1}\mat{A}\vec{h}_\text{old} = 
+\begin{bmatrix}
+\vec{I}^{(m)} & \vec{0}
+\end{bmatrix}.
+\end{equation}
+The third and final step is handled by the matrix $\mat{Q}$; it updates the charges from the most ancient time step in $\vec{h}_\text{old}$ to the most ancient time step in $\vec{h}_\text{new}$ (which is one time step later). The charges from $\vec{h}_\text{old}$ are carried along to $\vec{h}_\text{new}$ by $\mat{S}$, so all $\mat{Q}$ has to do is compute the change in the charges from one time step to the next (which is done by multiplying the net current into each segment by the time interval). Again starting with equation \ref{oldhistory}, the vector produced by $\mat{Q}$ is
+\begin{equation}
+\mat{Q}\vec{h}_\text{old} = 
+\begin{bmatrix}
+\vec{0} & \vec{Q}^{(1)} - \vec{Q}^{(0)} & 0
+\end{bmatrix}.
+\end{equation}
+Adding together the matrices from these three steps gives the overall transition matrix,
+\begin{equation}
+\mat{G} = \mat{S} + \mat{E}\mat{M}^{-1}\mat{A} + \mat{Q}
+\end{equation}
+When this matrix acts on the vector in equation \ref{oldhistory}, it produces the new history vector,
+\begin{equation}
+\vec{h}_\text{new} = \mat{G}\vec{h}_\text{old} = 
+\begin{bmatrix}
+\vec{I}^{(m)} & \vec{I}^{(m-1)} & \cdots & \vec{I}^{(2)} & \vec{I}^{(1)} & \vec{Q}^{(1)} & 1
+\end{bmatrix}.
+\end{equation}
+
 \section{Generating the Matrix}
-\begin{itemize}
-\item Computation of geometric factors
-\item Interpolation of charges and currents
-\item Putting everything together to get the transition matrix
-\end{itemize}
 
 \section{Two-Stage Stepping}
 \begin{itemize}
@@ -96,9 +230,14 @@ Abstract goes here.
 \begin{itemize}
 \item Briefly describe functions in microTDFL.py and their inputs/outputs
 % include some sample code as a demo?  (there are various packages to render code in LaTeX...  i like minted, if you can get it to work, but "listings" is pretty good too)
+\item List of symbols/variable names/matrix names and their meanings?
 \end{itemize}
 
 \bibliography{microTDFL.bbl}
 % ahh, bibtex...  let me know if you want some additional references.
 
 \end{document}
+
+% TODO:
+% mention index convention (i for field point, j for source)
+% is [...]_ret actually necessary?
