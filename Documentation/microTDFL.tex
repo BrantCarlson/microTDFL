@@ -90,22 +90,34 @@ The current in segment $i$ is determined by the component of the electric field 
 \begin{equation}
 \hat{I}_i\cdot\vec{E}(\vec{x}_i, t) = \frac{1}{4\pi\epsilon_0} \int dl' \left\{ \frac{\hat{I}_i\cdot\hat{R}}{R^2} \left[\lambda(\vec{x}', t')\right]_\text{ret} + \frac{\hat{I}_i\cdot\hat{R}}{cR} \left[\frac{\partial\lambda(\vec{x}', t')}{\partial t'}\right]_\text{ret} - \frac{1}{c^2R} \left[\hat{I}_i\cdot\frac{\partial\vec{I}(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\}.
 \end{equation}
-
-% geometric factors:
-
+Breaking the integral over the entire channel into a sum of integrals over the charge segments and a sum of integrals over the current segments:
+\begin{equation}
+\begin{split}
+\hat{I}_i\cdot\vec{E}(\vec{x}_i, t) = \frac{1}{4\pi\epsilon_0} \sum_{j=1}^n \left\{\int dl' \frac{\hat{I}_i\cdot\hat{R}}{R^2} \left[\lambda_j(\vec{x}', t')\right]_\text{ret} + \int dl' \frac{\hat{I}_i\cdot\hat{R}}{cR} \left[\frac{\partial\lambda_j(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\}\\
+- \frac{1}{4\pi\epsilon_0} \sum_{j=1}^{n-1} \left\{\int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2R} \left[\frac{\partial I_j(\vec{x}', t')}{\partial t'}\right]_\text{ret} \right\}.
+\end{split}
+\end{equation}
+Also note that we have replaced $\vec{I}_j$ in the last term with $I_j\hat{I}_j$ (where $\hat{I}_j$ is a unit vector pointing along current segment $j$), allowing the time-independent part ($\hat{I}_j$) to be separated from the time-dependent part ($I_j$). We now suppose that the charge and current densities are spatially constant on any given segment, allowing us to pull them outside of the integrals. We also replace the charge density $\lambda_j$ with the total charge on the segment $Q_j$ divided by its length $l_j$:
+\begin{equation}
+\label{EFIEderiv}
+\begin{split}
+\hat{I}_i\cdot\vec{E}(\vec{x}_i, t) = \frac{1}{4\pi\epsilon_0} \sum_{j=1}^n \left\{\left[Q_j(t')\right]_\text{ret} \int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_jR^2} + \left[\frac{\partial Q_j(t')}{\partial t'}\right]_\text{ret} \int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_jcR}\right\}\\
+- \frac{1}{4\pi\epsilon_0} \sum_{j=1}^{n-1} \left\{\left[\frac{\partial I_j(t')}{\partial t'}\right]_\text{ret} \int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2R}\right\}.
+\end{split}
+\end{equation}
+We now make the following definitions of the matrices $\mat{R2}$, $\mat{R1L}$, and $\mat{R1T}$. These matrices depend on the geometry of the lightning channel but not on the charges or currents on the channel (past or present). They only need to be computed once for a particular channel geometry and then can be reused whenever the EFIE is used to compute the electric field at the center of one of the current segments.
 \begin{align}
 \mat{R2}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j R^2}\\
-\mat{R1L}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{c l_j R}\\
+\mat{R1L}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j c R}\\
 \mat{R1T}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2 R}
 \end{align}
-
+We can now rewrite equation \ref{EFIEderiv} using the geometric factor matrices $\mat{R2}$, $\mat{R1L}$, and $\mat{R1T}$. We also rewrite the left side (the component of the electric field parallel to the channel) using Ohm's law:
 \begin{equation}
 I_iR_l =
 \sum_{j=1}^n \left\{\mat{R2}_{ij}\left[Q_j(t')\right]_\text{ret}
 + \mat{R1L}_{ij}\left[\frac{\partial Q_j(t')}{\partial t'}\right]_\text{ret}\right\}
 - \sum_{j=1}^{n-1}\left\{\mat{R1T}_{ij}\left[\frac{\partial I_j(t')}{\partial t'}\right]_\text{ret}\right\}
 \end{equation}
-...with a derivation of the above equation from the EFIE (also definitions of the geometric factor matrices).
 
 \subsection{Computing the geometric factors}
 Text goes here.
