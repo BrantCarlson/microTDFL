@@ -122,7 +122,39 @@ I_iR_l =
 \subsection{Computing the geometric factors}
 Implicit in equations \ref{R2}, \ref{R1L}, and \ref{R1T} (specifically in $\hat{R}$ and $R$) is a point at which the electric field is being evaluated. The geometric factors $\mat{R2}_{ij}$, $\mat{R1L}_{ij}$, and $\mat{R1T}_{ij}$ represent the contributions of charge segment $j$ and current segment $j$ to the electric field at current segment $i$, but we didn't specify which point on the current segment. We could use the center of the segment, but for better results we average over multiple points along the segment. This is sort of like computing the average electric field on the segment, but not quite, since the retarded time is different at different points on the segment; we average the geometric factors over the entire segment but only use the retarded time for the center of the segment. We will demonstrate how equations \ref{R2}, \ref{R1L}, and \ref{R1T} are evaluated for a particular source segment $j$ and a particular field point on current segment $i$ in a channel with straight-line geometry; to compute an entry in one of these matrices, this result is averaged over a number of points along segment $i$.
 
-We start with $\mat{R2}_{ij}$. Suppose charge segment $j$ has endpoints at $c$ and $d$ (with $c<d$), and suppose we want to evaluate equation \ref{R2} at the point $x$. First we need to evaluate the dot product $\hat{I}_i\cdot\hat{R}$. Both unit vectors point along the channel, so the dot product will be 1 or $-1$, depending on whether they point the same way. All the current segments are oriented the same way, so $\hat{I}_i$ always points in the positive direction. $\hat{R}$ points from the source point to the field point (from segment $j$ to point $x$). If $x \geq d$ then $\hat{R}$ points in the positive direction, if $x \leq c$ then $\hat{R}$ points in the negative direction, and if $c<x<d$ (which is possible when segments $i$ and $j$ overlap) then parts of the segment are on either side of $x$ and will contribute with opposite sign.
+We start with $\mat{R2}_{ij}$. Suppose charge segment $j$ has endpoints at $c$ and $d$ (with $c<d$), and suppose we want to evaluate equation \ref{R2} at a point $x$ on current segment $i$. First we need to evaluate the dot product $\hat{I}_i\cdot\hat{R}$. Both unit vectors point along the channel, so the dot product will be 1 or $-1$, depending on whether they point the same way. All the current segments are oriented the same way, so $\hat{I}_i$ always points in the positive direction. $\hat{R}$ points from the source point to the field point (from segment $j$ to point $x$). If $x \geq d$ then $\hat{R}$ points in the positive direction, if $x \leq c$ then $\hat{R}$ points in the negative direction, and if $c<x<d$ (which is possible when segments $i$ and $j$ overlap) then parts of the segment are on either side of $x$ and will contribute with opposite sign.
+
+The only other part to deal with (other than multiplying by constants) is the integral of $1/R^2$. This integral diverges at $R=0$, so we'll use the thin-wire approximation to replace $R^2$ with $R^2+a^2$. Since $R$ is just a distance along the channel, we can change $dl'$ to $dR$, as long as we're careful about the limits of integration. The antiderivative is
+\begin{equation}
+\label{antideriv2}
+\int \frac{dR}{R^2 + a^2} = \frac{1}{a}\tan^{-1}\left(\frac{R}{a}\right) + C.
+\end{equation}
+If $c<x<d$, we break the integral into two parts; otherwise, we simply evaluate the antiderivative from one end of the channel to the other. Putting this all together (constants, dot product, and antiderivative), we get the following result:
+\begin{equation}
+\mat{R2}_{ij} = \begin{cases}
+\dfrac{-1}{4\pi\epsilon_0l_j} \left[F(d-x)-F(c-x)\right], & x \leq c \\[1em]
+\dfrac{1}{4\pi\epsilon_0l_j} \left[-F(d-x)-F(c-x)\right], & c<x<d \\[1em]
+\dfrac{1}{4\pi\epsilon_0l_j} \left[F(d-x)-F(c-x)\right], & x \geq d
+\end{cases}
+\end{equation}
+where $F(R)$ is the antiderivative given in equation \ref{antideriv2}. Note that in the $c<x<d$ case, there are only two terms because $F(0)=0$. Again, this calculation is averaged for values of $x$ along segment $i$ to give the actual value of $\mat{R2}_{ij}$. We calculate $\mat{R1L}_{ij}$ in a similar way. This time the relevant antiderivative is
+\begin{equation}
+\label{antideriv1}
+\int \frac{dR}{\sqrt{R^2+a^2}} = \log\left(\sqrt{R^2+a^2}+R\right) + C,
+\end{equation}
+and the overall result (again, averaging along segment $i$) is:
+\begin{equation}
+\mat{R1L}_{ij} = \begin{cases}
+\dfrac{-1}{4\pi\epsilon_0c l_j} \left[F(d-x)-F(c-x)\right], & x \leq c \\[1em]
+\dfrac{1}{4\pi\epsilon_0c l_j} \left[2 F(0)-F(d-x)-F(c-x)\right], & c<x<d \\[1em]
+\dfrac{1}{4\pi\epsilon_0c l_j} \left[F(d-x)-F(c-x)\right], & x \geq d
+\end{cases}
+\end{equation}
+where $F(R)$ is the antiderivative given in equation \ref{antideriv1}. Finally, we turn to $\mat{R1T}_{ij}$. Fortunately, the dot product $\hat{I}_i\cdot\hat{I}_j$ is always 1, so we can simply integrate over segment $j$ (then average over segment $i$):
+\begin{equation}
+\mat{R1T}_{ij} = \frac{1}{4\pi\epsilon_0c^2} \left[F(d-x)-F(c-x)\right]
+\end{equation}
+where $F(R)$ is the antiderivative given in equation \ref{antideriv1}.
 
 \subsection{Interpolating the charges and currents}
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.7.29)  30 JUL 2014 16:29
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.7.29)  31 JUL 2014 15:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -351,14 +351,14 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 33.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] (./microTD
-FL.bbl) [6]
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6] (./mic
+roTDFL.bbl) [7]
 (./microTDFL.aux) ) 
 Here is how much of TeX's memory you used:
- 4394 strings out of 493304
- 62159 string characters out of 6139871
- 139880 words of memory out of 5000000
- 7774 multiletter control sequences out of 15000+600000
+ 4396 strings out of 493304
+ 62183 string characters out of 6139871
+ 140898 words of memory out of 5000000
+ 7776 multiletter control sequences out of 15000+600000
  12729 words of font info for 49 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
  38i,20n,32p,1150b,219s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -376,10 +376,10 @@ c/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
 ts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
 cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/ms
 bm10.pfb>
-Output written on microTDFL.pdf (6 pages, 164935 bytes).
+Output written on microTDFL.pdf (7 pages, 169891 bytes).
 PDF statistics:
- 79 PDF objects out of 1000 (max. 8388607)
- 56 compressed objects within 1 object stream
+ 84 PDF objects out of 1000 (max. 8388607)
+ 60 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
