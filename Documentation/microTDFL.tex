@@ -82,7 +82,7 @@ This is the basic idea of how the simulation works. To carry out the simulation,
 
 \section{Computing the Electric Field}
 \subsection{Applying the EFIE to the discretized channel}
-Consider the electric field at $\vec{x}_i$, the center of current segment $i$. From equation \ref{EFIE1d} we have
+Consider the electric field at $\vec{x}_i$, a point on current segment $i$. From equation \ref{EFIE1d} we have
 \begin{equation}
 \vec{E}(\vec{x}_i, t) = \frac{1}{4\pi\epsilon_0} \int dl' \left\{ \frac{\hat{R}}{R^2} \left[\lambda(\vec{x}', t')\right]_\text{ret} + \frac{\hat{R}}{cR} \left[\frac{\partial\lambda(\vec{x}', t')}{\partial t'}\right]_\text{ret} - \frac{1}{c^2R} \left[\frac{\partial\vec{I}(\vec{x}', t')}{\partial t'}\right]_\text{ret}\right\}
 \end{equation}
@@ -105,22 +105,24 @@ Also note that we have replaced $\vec{I}_j$ in the last term with $I_j\hat{I}_j$
 - \frac{1}{4\pi\epsilon_0} \sum_{j=1}^{n-1} \left\{\left[\frac{\partial I_j(t')}{\partial t'}\right]_\text{ret} \int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2R}\right\}.
 \end{split}
 \end{equation}
-We now make the following definitions of the matrices $\mat{R2}$, $\mat{R1L}$, and $\mat{R1T}$. These matrices depend on the geometry of the lightning channel but not on the charges or currents on the channel (past or present). They only need to be computed once for a particular channel geometry and then can be reused whenever the EFIE is used to compute the electric field at the center of one of the current segments.
+We now make the following definitions of the matrices $\mat{R2}$, $\mat{R1L}$, and $\mat{R1T}$. These matrices depend on the geometry of the lightning channel but not on the charges or currents on the channel (past or present). They only need to be computed once for a particular channel geometry and then can be reused whenever the EFIE is used to compute the electric field on one of the current segments.
 \begin{align}
-\mat{R2}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j R^2}\\
-\mat{R1L}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j c R}\\
-\mat{R1T}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2 R}
+\label{R2}\mat{R2}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j R^2}\\
+\label{R1L}\mat{R1L}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{R}}{l_j c R}\\
+\label{R1T}\mat{R1T}_{ij} &= \frac{1}{4\pi\epsilon_0}\int dl' \frac{\hat{I}_i\cdot\hat{I}_j}{c^2 R}
 \end{align}
 We can now rewrite equation \ref{EFIEderiv} using the geometric factor matrices $\mat{R2}$, $\mat{R1L}$, and $\mat{R1T}$. We also rewrite the left side (the component of the electric field parallel to the channel) using Ohm's law:
 \begin{equation}
 I_iR_l =
 \sum_{j=1}^n \left\{\mat{R2}_{ij}\left[Q_j(t')\right]_\text{ret}
 + \mat{R1L}_{ij}\left[\frac{\partial Q_j(t')}{\partial t'}\right]_\text{ret}\right\}
-- \sum_{j=1}^{n-1}\left\{\mat{R1T}_{ij}\left[\frac{\partial I_j(t')}{\partial t'}\right]_\text{ret}\right\}
+- \sum_{j=1}^{n-1}\left\{\mat{R1T}_{ij}\left[\frac{\partial I_j(t')}{\partial t'}\right]_\text{ret}\right\}.
 \end{equation}
 
 \subsection{Computing the geometric factors}
-Text goes here.
+Implicit in equations \ref{R2}, \ref{R1L}, and \ref{R1T} (specifically in $\hat{R}$ and $R$) is a point at which the electric field is being evaluated. The geometric factors $\mat{R2}_{ij}$, $\mat{R1L}_{ij}$, and $\mat{R1T}_{ij}$ represent the contributions of charge segment $j$ and current segment $j$ to the electric field at current segment $i$, but we didn't specify which point on the current segment. We could use the center of the segment, but for better results we average over multiple points along the segment. This is sort of like computing the average electric field on the segment, but not quite, since the retarded time is different at different points on the segment; we average the geometric factors over the entire segment but only use the retarded time for the center of the segment. We will demonstrate how equations \ref{R2}, \ref{R1L}, and \ref{R1T} are evaluated for a particular source segment $j$ and a particular field point on current segment $i$ in a channel with straight-line geometry; to compute an entry in one of these matrices, this result is averaged over a number of points along segment $i$.
+
+We start with $\mat{R2}_{ij}$. Suppose charge segment $j$ has endpoints at $c$ and $d$ (with $c<d$), and suppose we want to evaluate equation \ref{R2} at the point $x$. First we need to evaluate the dot product $\hat{I}_i\cdot\hat{R}$. Both unit vectors point along the channel, so the dot product will be 1 or $-1$, depending on whether they point the same way. All the current segments are oriented the same way, so $\hat{I}_i$ always points in the positive direction. $\hat{R}$ points from the source point to the field point (from segment $j$ to point $x$). If $x \geq d$ then $\hat{R}$ points in the positive direction, if $x \leq c$ then $\hat{R}$ points in the negative direction, and if $c<x<d$ (which is possible when segments $i$ and $j$ overlap) then parts of the segment are on either side of $x$ and will contribute with opposite sign.
 
 \subsection{Interpolating the charges and currents}
 
