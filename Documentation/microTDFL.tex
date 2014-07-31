@@ -13,6 +13,7 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{mathtools}
+\usepackage{nicefrac}
 \setcounter{MaxMatrixCols}{20}
 \setlength\delimitershortfall{-2pt}
 \newcommand{\mat}{\mathbf}
@@ -62,11 +63,9 @@ With the thin-wire approximation:
 \end{equation}
 
 \section{Framework}
-\begin{itemize}
-\item Channel geometry (with pictures!)
-\item Overview of model operation and organization of history vector
-\end{itemize}
+\subsection{Discretizing time and the channel}
 
+\subsection{Storing the channel history}
 Since the charge and current densities in the EFIE are evaluated in retarded time, the electric field depends on a history of charges and currents, not just the present state of the channel. This history is stored as a vector of the form
 \begin{equation}
 \vec{h} = 
@@ -223,6 +222,7 @@ The third and final step is handled by the matrix $\mat{Q}$; it updates the char
 \end{equation}
 Adding together the matrices from these three steps gives the overall transition matrix,
 \begin{equation}
+\label{SEMAQ}
 \mat{G} = \mat{S} + \mat{E}\mat{M}^{-1}\mat{A} + \mat{Q}
 \end{equation}
 When this matrix acts on the vector in equation \ref{oldhistory}, it produces the new history vector,
@@ -234,6 +234,73 @@ When this matrix acts on the vector in equation \ref{oldhistory}, it produces th
 \end{equation}
 
 \section{Generating the Matrix}
+To generate the transition matrix, we compute the matrices $\mat{S}$, $\mat{E}$, $\mat{Q}$, $\mat{M}$, and $\mat{A}$ one at a time and then combine them as in equation \ref{SEMAQ}.
+
+\subsection{Moving things around}
+The matrix $\mat{S}$ is responsible for shifting the currents down one time step in the history vector, while carrying along the charges and the last element in the vector. The currents are shifted down by a diagonal of $(m-1)(n-1)$ ones starting with $\mat{S}_{n,1}$, and the currents and applied field entry are carried forward by $n+1$ ones at the end of the main diagonal. As an example, if $n=4$ and $m=3$, then
+\begin{equation}
+\mat{S} = \begin{bmatrix}
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{bmatrix}.
+\end{equation}
+The matrix $\mat{E}$ is even simpler. All it does is extend an $(n-1) \times 1$ vector to an $m(n-1)+n+1 \times 1$ vector by adding zeros; it is simply the $(n-1) \times (n-1)$ identity with $(m-1)(n-1)+n+1$ rows of zeros below it. Again using $n=4$ and $m=3$, it would be
+\begin{equation}
+\mat{E} = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 1 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\subsection{Updating the charges}
+The job of $\mat{Q}$ is to update the charges stored in the history vector. For instance, to advance the simulation from step $j$ to step $j+1$, the charges need to be updated from $Q^{(j)}$ to $Q^{(j+1)}$. This is done by adding the average net currents into each charge segment multiplied by the time interval ($\Delta Q = I\delta t$).
+\newlength{\mycolwd}
+\settowidth{\mycolwd}{$-\nicefrac{1}{2}$}
+\newcommand\w[1]{\makebox[\mycolwd]{$#1$}}
+\begin{equation}
+\mat{Q} = \begin{bmatrix}
+\w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & -\nicefrac{1}{2} & 0 & 0 & -\nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & \nicefrac{1}{2} & 0 & 0 & \nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0
+\end{bmatrix}\delta t.
+\end{equation}
+
+\subsection{Solving for the new currents}
 
 \section{Two-Stage Stepping}
 \begin{itemize}
