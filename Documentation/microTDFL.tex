@@ -162,11 +162,12 @@ where $F(R)$ is the antiderivative given in equation \ref{antideriv1}.
 
 The heart of the model is the system of linear equations that solves for the currents at the next time step. This system has the form
 \begin{align}
+\label{linearsystem}
 \begin{split}
-I_0R_l &= c_{00}I_0 + c_{01}I_1 + c_{02}I_2 + \cdots + c_{0,n-2}I_{n-2} + d_0 \\
-I_1R_l &= c_{10}I_0 + c_{11}I_1 + c_{12}I_2 + \cdots + c_{1,n-2}I_{n-2} + d_1 \\
-I_2R_l &= c_{20}I_0 + c_{21}I_1 + c_{22}I_2 + \cdots + c_{2,n-2}I_{n-2} + d_2 \\
-\vdotswithin{I_2R_l} & \vdotswithin{= c_{20}I_0 + c_{21}I_1 + c_{22}I_2 + \cdots + c_{2,n-2}I_{n-2} + d_2}
+I_1R_l &= c_{11}I_1 + c_{12}I_2 + c_{13}I_3 + \cdots + c_{1,n-1}I_{n-1} + d_1 \\
+I_2R_l &= c_{21}I_1 + c_{22}I_2 + c_{23}I_3 + \cdots + c_{2,n-1}I_{n-1} + d_2 \\
+I_3R_l &= c_{31}I_1 + c_{32}I_2 + c_{33}I_3 + \cdots + c_{3,n-1}I_{n-1} + d_3 \\
+\vdotswithin{I_3R_l} & \vdotswithin{= c_{31}I_1 + c_{32}I_2 + c_{33}I_3 + \cdots + c_{3,n-1}I_{n-1} + d_3}
 \end{split}
 \end{align}
 where the left side of each equation is the electric field as determined by Ohm's law and the right side is the field as computed from the EFIE. The currents $I_0, I_1, \ldots, I_{n-2}$ are the unknown currents at the next time step, each $c_{ij}I_j$ term is the contribution of current $j$ to electric field at current segment $i$, and $d_i$ is the contribution of earlier charges and currents (and the applied field) to the field at current segment $i$. In matrix form, we have
@@ -175,10 +176,10 @@ R_l\vec{I} = \left[c_{ij}\right] \cdot \vec{I} + \vec{d}.
 \end{equation}
 Rearranging, we get
 \begin{equation}
-\label{linearsystem}
+\label{matrixsystem}
 \left(\left[c_{ij}\right] - R_l\mathbb{I}\right) \vec{I} = -\vec{d},
 \end{equation}
-where $\mathbb{I}$ is the identity matrix. Defining $\mat{M}$ to be the matrix on the left side of equation \ref{linearsystem}, and defining $\vec{b} = -\vec{d}$ (to avoid negative signs), we simply have
+where $\mathbb{I}$ is the identity matrix. Defining $\mat{M}$ to be the matrix on the left side of equation \ref{matrixsystem}, and defining $\vec{b} = -\vec{d}$ (to avoid negative signs), we simply have
 \begin{equation}
 \label{mib}
 \mat{M} \vec{I} = \vec{b}.
@@ -277,12 +278,12 @@ The matrix $\mat{E}$ is even simpler. All it does is extend an $(n-1) \times 1$ 
 \end{equation}
 
 \subsection{Updating the charges}
-The job of $\mat{Q}$ is to update the charges stored in the history vector. For instance, to advance the simulation from step $j$ to step $j+1$, the charges need to be updated from $Q^{(j)}$ to $Q^{(j+1)}$. This is done by adding the average net currents into each charge segment multiplied by the time interval ($\Delta Q = I\delta t$).
+The job of $\mat{Q}$ is to update the charges stored in the history vector. For instance, to advance the simulation from step $j$ to step $j+1$, the charges need to be updated from $Q^{(j)}$ to $Q^{(j+1)}$. This is done by adding the average net currents into each charge segment multiplied by the time interval ($\Delta Q = I\delta t$). For $n=4$ and $m=3$, the matrix is
 \newlength{\mycolwd}
-\settowidth{\mycolwd}{$-\nicefrac{1}{2}$}
+\settowidth{\mycolwd}{$-1$}
 \newcommand\w[1]{\makebox[\mycolwd]{$#1$}}
 \begin{equation}
-\mat{Q} = \begin{bmatrix}
+\mat{Q} = \frac{\delta t}{2} \begin{bmatrix}
 \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 & \w0 \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
@@ -292,13 +293,14 @@ The job of $\mat{Q}$ is to update the charges stored in the history vector. For 
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & -\nicefrac{1}{2} & 0 & 0 & -\nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & \nicefrac{1}{2} & -\nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 & \nicefrac{1}{2} & 0 & 0 & \nicefrac{1}{2} & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & -1 & 0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & -1 & 0 & 1 & -1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & -1 & 0 & 1 & -1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0
-\end{bmatrix}\delta t.
+\end{bmatrix}.
 \end{equation}
+The $n$ nonzero rows (four in the example) in $\mat{Q}$ represent the charges added to each of the $n$ charge segments moving from step $j$ to step $j+1$. The first $n-1$ nonzero columns represent the contributions from the $n-1$ currents at step $j+1$, and the last $n-1$ nonzero columns represent the contributions from the $n-1$ currents at step $j$. Consider the first three nonzero columns of the four nonzero rows in the example above. There is a $-1$ in the first row because the first current segment flows out of the first charge segment. The second row has a 1 for the first current segment (which flows into the second charge segment) and a $-1$ for the second current segment (which flows out of the second charge segment). The other two rows are similar. This pattern of 1s and $-1$s is repeated three columns over (and the entire matrix is divided by 2) in order to average the currents at steps $j$ and $j+1$.
 
 \subsection{Solving for the new currents}
 
